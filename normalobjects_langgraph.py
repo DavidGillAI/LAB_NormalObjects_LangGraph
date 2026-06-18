@@ -65,6 +65,9 @@ def validate_node(state: ComplaintState) -> ComplaintState:
     if category == "other":
         validation_result = "invalid"
 
+    if len(complaint) < 20:
+        validation_result = "invalid"
+
     new_state = {
         **state,
         "validation_result": validation_result,
@@ -136,6 +139,14 @@ def close_node(state: ComplaintState) -> ComplaintState:
 # Complaints must follow Bloyce's Protocol:
 # intake -> validate -> investigate -> resolve -> close
 
+def validation_router(state: ComplaintState):
+    """Route complaints based on validation result"""
+
+    if state["validation_result"] == "invalid":
+        return "close"
+
+    return "investigate"
+
 workflow.add_node("intake", intake_node)
 workflow.add_node("validate", validate_node)
 workflow.add_node("investigate", investigate_node)
@@ -145,26 +156,43 @@ workflow.add_node("close", close_node)
 workflow.set_entry_point("intake")
 
 workflow.add_edge("intake", "validate")
-workflow.add_edge("validate", "investigate")
+workflow.add_conditional_edges(
+    "validate",
+    validation_router,
+    {
+        "investigate": "investigate",
+        "close": "close"
+    }
+)
 workflow.add_edge("investigate", "resolve")
 workflow.add_edge("resolve", "close")
 workflow.add_edge("close", END)
 
 app = workflow.compile()
 
-test_state = {
-    "complaint": "The Downside Up portal opens at different times each day.",
-    "category": None,
-    "validation_result": None,
-    "investigation_result": None,
-    "resolution": None,
-    "effectiveness": None,
-    "outcome": None,
-    "workflow_path": [],
-    "status": "new"
-}
+test_complaints = [
+    "The Downside Up portal opens at different times each day. How do I predict when?",
+    "Why do creatures and power lines react strangely together?",
+    "Random thing"
+]
 
-result = app.invoke(test_state)
+print("\nTesting workflow with sample complaints...\n")
 
-print("\nWorkflow Path:")
-print(result["workflow_path"])
+for complaint in test_complaints:
+
+    test_state = {
+        "complaint": complaint,
+        "category": None,
+        "validation_result": None,
+        "investigation_result": None,
+        "resolution": None,
+        "effectiveness": None,
+        "outcome": None,
+        "workflow_path": [],
+        "status": "new"
+    }
+
+    result = app.invoke(test_state)
+
+    print("\nWorkflow Path:")
+    print(result["workflow_path"])
