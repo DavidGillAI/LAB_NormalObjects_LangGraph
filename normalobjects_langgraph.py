@@ -62,7 +62,25 @@ def validate_node(state: ComplaintState) -> ComplaintState:
 
     validation_result = "valid"
 
-    if category == "other":
+    complaint_lower = complaint.lower()
+
+    if category == "portal":
+        if "portal" not in complaint_lower:
+            validation_result = "invalid"
+
+    elif category == "monster":
+        if not any(word in complaint_lower for word in ["monster", "demogorgon", "creature"]):
+            validation_result = "invalid"
+
+    elif category == "psychic":
+        if not any(word in complaint_lower for word in ["psychic", "mind", "telekinesis", "ability"]):
+            validation_result = "invalid"
+
+    elif category == "environmental":
+        if not any(word in complaint_lower for word in ["power", "electric", "weather", "environment"]):
+            validation_result = "invalid"
+
+    elif category == "other":
         validation_result = "invalid"
 
     if len(complaint) < 20:
@@ -172,7 +190,7 @@ app = workflow.compile()
 
 test_complaints = [
     "The Downside Up portal opens at different times each day. How do I predict when?",
-    "Why do creatures and power lines react strangely together?",
+    "Environmental complaint: power lines react strangely whenever creatures appear nearby",
     "Random thing"
 ]
 
