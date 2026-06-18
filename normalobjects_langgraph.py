@@ -3,6 +3,7 @@ from langgraph.graph import StateGraph, END
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
+from datetime import datetime
 
 class ComplaintState(TypedDict):
     complaint: str
@@ -12,6 +13,7 @@ class ComplaintState(TypedDict):
     resolution: Optional[str]
     effectiveness: Optional[str]
     outcome: Optional[str]
+    timestamp: Optional[str]
     workflow_path: List[str]
     status: str
 
@@ -142,10 +144,12 @@ def close_node(state: ComplaintState) -> ComplaintState:
     print("\n[CLOSE] Closing complaint...")
 
     outcome = "Resolution applied and logged"
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     new_state = {
         **state,
         "outcome": outcome,
+        "timestamp": timestamp,
         "workflow_path": state["workflow_path"] + ["close"],
         "status": "closed"
     }
