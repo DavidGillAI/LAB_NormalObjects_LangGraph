@@ -131,3 +131,40 @@ def close_node(state: ComplaintState) -> ComplaintState:
 
     print("[CLOSE] Complaint closed")
     return new_state
+
+# Build the LangGraph complaint workflow
+# Complaints must follow Bloyce's Protocol:
+# intake -> validate -> investigate -> resolve -> close
+
+workflow.add_node("intake", intake_node)
+workflow.add_node("validate", validate_node)
+workflow.add_node("investigate", investigate_node)
+workflow.add_node("resolve", resolve_node)
+workflow.add_node("close", close_node)
+
+workflow.set_entry_point("intake")
+
+workflow.add_edge("intake", "validate")
+workflow.add_edge("validate", "investigate")
+workflow.add_edge("investigate", "resolve")
+workflow.add_edge("resolve", "close")
+workflow.add_edge("close", END)
+
+app = workflow.compile()
+
+test_state = {
+    "complaint": "The Downside Up portal opens at different times each day.",
+    "category": None,
+    "validation_result": None,
+    "investigation_result": None,
+    "resolution": None,
+    "effectiveness": None,
+    "outcome": None,
+    "workflow_path": [],
+    "status": "new"
+}
+
+result = app.invoke(test_state)
+
+print("\nWorkflow Path:")
+print(result["workflow_path"])
